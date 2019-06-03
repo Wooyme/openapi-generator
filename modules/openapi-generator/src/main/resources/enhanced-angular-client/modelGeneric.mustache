@@ -1,0 +1,68 @@
+export interface {{classname}}{{#allParents}}{{#-first}} extends {{/-first}}{{{.}}}{{^-last}}, {{/-last}}{{/allParents}} { {{>modelGenericAdditionalProperties}}
+{{#vars}}
+    {{#description}}
+    /**
+     * {{{description}}}
+     */
+    {{/description}}
+    {{#isReadOnly}}readonly {{/isReadOnly}}{{{name}}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}}{{#isNullable}} | null{{/isNullable}};
+{{/vars}}
+}{{>modelGenericEnums}}
+
+{{=<% %>=}}
+@Component({
+    selector: '<% xmlName %>-table',
+    template:`
+        <nb-card>
+            <nb-card-header>
+                {{title}}
+            </nb-card-header>
+            <nb-card-body>
+                <ng2-smart-table [settings]="settings" [source]="source" (deleteConfirm)="onDeleteConfirm($event)" (editConfirm)="onEditConfirm($event)">
+                </ng2-smart-table>
+            </nb-card-body>
+            <nb-card-footer>
+                <div class="float-right">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <input class="form-control input-sm" type="button" value="上一页" [disabled]="page==1" (click)="_goto(page-1)">
+                            <input class="form-control input-sm" style="width: 60px" type="text" [value]="page" #gotoPage>
+                            <span>{{' /' + maxPage.toString() + ' '}}</span>
+                            <input class="form-control input-sm" type="button" value="前往" (click)="_goto(gotoPage.value-0)">
+                            <input class="form-control input-sm" type="button" value="下一页" (click)="_goto(page+1)">
+                        </div>
+                    </div>
+                </div>
+            </nb-card-footer>
+        </nb-card>
+    `
+    styles: [`
+        button {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+    `],
+})
+export class <% classname %>TableComponent extends OnInit{
+    @Input() public onDeleteConfirm:(any)=>void;
+    @Input() public onEditConfirm:(any)=>void;
+    @Input() public goto:(number)=>Promise<{dataCount:number,data:any[]}>;
+    @Input() public title:string = '<% className %>';
+    @Input() public limit:number = 25;
+    settings = {};
+    source = new LocalDataSource();
+    maxPage: number = 1;
+    page: number = 1;
+    constructor(){
+        this._goto(this.page);
+    }
+
+    _goto(page:number){
+        this.goto(page).then(data=>{
+            this.source.load(data.data);
+            this.maxPage = Math.ceil(data.dataCount / this.limit);
+        });
+        this.page = page;
+    }
+}
+<%={{ }}=%>
